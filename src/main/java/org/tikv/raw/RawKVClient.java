@@ -129,7 +129,7 @@ public class RawKVClient implements AutoCloseable {
    */
   public ByteString get(ByteString key) {
     BackOffer backOffer = defaultBackOff();
-    while (true) {
+    for (int i = 0; i < MAX_RETRY_LIMIT; i++) {
       RegionStoreClient client = clientBuilder.build(key);
       try {
         return client.rawGet(defaultBackOff(), key);
@@ -137,6 +137,7 @@ public class RawKVClient implements AutoCloseable {
         backOffer.doBackOff(BackOffFunction.BackOffFuncType.BoRegionMiss, e);
       }
     }
+    throw ERR_RETRY_LIMIT_EXCEEDED;
   }
 
   /**
