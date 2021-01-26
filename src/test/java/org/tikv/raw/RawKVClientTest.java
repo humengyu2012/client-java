@@ -70,7 +70,7 @@ public class RawKVClientTest {
   public void setup() throws IOException {
     try {
       TiConfiguration conf = TiConfiguration.createRawDefault(DEFAULT_PD_ADDRESS);
-      session = TiSession.create(conf);
+      session = TiSession.getInstance(conf);
       initialized = false;
       if (client == null) {
         client = session.createRawClient();
@@ -78,7 +78,8 @@ public class RawKVClientTest {
       data = new TreeMap<>(bsc);
       initialized = true;
     } catch (Exception e) {
-      logger.warn("Cannot initialize raw client, please check whether TiKV is running. Test skipped.", e);
+      logger.warn(
+          "Cannot initialize raw client, please check whether TiKV is running. Test skipped.", e);
     }
   }
 

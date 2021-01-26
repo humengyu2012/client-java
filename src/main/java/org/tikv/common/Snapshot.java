@@ -37,7 +37,7 @@ import org.tikv.common.util.RangeSplitter;
 import org.tikv.common.util.RangeSplitter.RegionTask;
 import org.tikv.kvproto.Kvrpcpb.KvPair;
 
-public class Snapshot {
+public class Snapshot implements AutoCloseable{
   private final TiTimestamp timestamp;
   private final TiSession session;
   private final TiConfiguration conf;
@@ -176,5 +176,10 @@ public class Snapshot {
 
   public TiConfiguration getConf() {
     return conf;
+  }
+
+  @Override
+  public void close() throws Exception {
+    session.close();
   }
 }

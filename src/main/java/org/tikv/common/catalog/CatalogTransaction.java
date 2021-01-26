@@ -36,7 +36,7 @@ import org.tikv.common.meta.TiDBInfo;
 import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.util.Pair;
 
-public class CatalogTransaction {
+public class CatalogTransaction implements AutoCloseable {
   protected static final Logger logger = LoggerFactory.getLogger(CatalogTransaction.class);
   private final Snapshot snapshot;
 
@@ -104,5 +104,10 @@ public class CatalogTransaction {
       }
     }
     return builder.build();
+  }
+
+  @Override
+  public void close() throws Exception {
+    snapshot.close();
   }
 }

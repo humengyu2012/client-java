@@ -51,6 +51,7 @@ import org.tikv.txn.TxnKVClient;
 public class TiSession implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(TiSession.class);
   private static final Map<String, TiSession> sessionCachedMap = new HashMap<>();
+  private static final Map<String, Integer> sessionCount = new HashMap<>();
   private final TiConfiguration conf;
   private final ChannelFactory channelFactory;
   private Function<CacheInvalidateEvent, Void> cacheInvalidateCallback;
@@ -64,26 +65,23 @@ public class TiSession implements AutoCloseable {
   private volatile RegionStoreClient.RegionStoreClientBuilder clientBuilder;
   private boolean isClosed = false;
 
-  public TiSession(TiConfiguration conf) {
+  private TiSession(TiConfiguration conf) {
     this.conf = conf;
     this.channelFactory = new ChannelFactory(conf.getMaxFrameSize());
     this.client = PDClient.createRaw(conf, channelFactory);
-  }
-
-  @VisibleForTesting
-  public static TiSession create(TiConfiguration conf) {
-    return new TiSession(conf);
   }
 
   public static TiSession getInstance(TiConfiguration conf) {
     synchronized (sessionCachedMap) {
       String key = conf.getPdAddrsString();
       if (sessionCachedMap.containsKey(key)) {
+        sessionCount.put(key, sessionCount.get(key) + 1);
         return sessionCachedMap.get(key);
       }
 
       TiSession newSession = new TiSession(conf);
       sessionCachedMap.put(key, newSession);
+      sessionCount.put(key, 1);
       return newSession;
     }
   }
@@ -349,8 +347,13 @@ public class TiSession implements AutoCloseable {
       return;
     }
 
-    isClosed = true;
     synchronized (sessionCachedMap) {
+      String pdAddrsString = conf.getPdAddrsString();
+      sessionCount.put(pdAddrsString, sessionCount.get(pdAddrsString) - 1);
+      if (sessionCount.get(pdAddrsString) > 0) {
+        return;
+      }
+      isClosed = true;
       sessionCachedMap.remove(conf.getPdAddrsString());
     }
 

@@ -43,7 +43,9 @@ public class Catalog implements AutoCloseable {
   }
 
   @Override
-  public void close() {}
+  public void close() throws Exception {
+    metaCache.getTransaction().close();
+  }
 
   private synchronized void reloadCache(boolean loadTables) {
     Snapshot snapshot = snapshotProvider.get();
